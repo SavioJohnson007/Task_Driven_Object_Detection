@@ -1,0 +1,10 @@
+.agents/
+.codex/
+.vscode/
+
+**/.venv/
+**/.cache/
+**/__pycache__/
+
+# Datasets
+**/data/
