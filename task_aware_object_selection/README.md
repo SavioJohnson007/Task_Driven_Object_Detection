@@ -74,10 +74,10 @@ graph TB
     
     Select --> Output["✅ Selected Object<br/>Index + Score"]
     
-    style YOLO fill:#e1f5ff
-    style TaskEnc fill:#e1f5ff
-    style ReasonNet fill:#fff3e0
-    style Output fill:#e8f5e9
+    style YOLO fill:#263238,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style TaskEnc fill:#263238,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style ReasonNet fill:#455A64,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style Output fill:#1E88E5,stroke:#ffffff,stroke-width:1px,color:#ffffff
 ```
 
 ### End-to-End Data Flow
@@ -102,7 +102,7 @@ graph LR
     subgraph Reasoning["🧠 Reasoning Network"]
         film["FiLM<br/>Conditioning"]
         spatial["Spatial<br/>Embedding"]
-        class["Class<br/>Embedding"]
+        cls["Class<br/>Embedding"]
         concat["Concat<br/>Features"]
         context["Context<br/>Pooling"]
         rank["Multi-Signal<br/>Ranking"]
@@ -121,20 +121,20 @@ graph LR
     vis --> film
     task --> film
     film --> spatial
-    film --> class
+    film --> cls
     spatial --> concat
-    class --> concat
+    cls --> concat
     concat --> context
     context --> rank
     rank --> sel
     sel --> result
     
-    style yolo fill:#c8e6c9
-    style task fill:#c8e6c9
-    style film fill:#fff9c4
-    style context fill:#fff9c4
-    style rank fill:#ffccbc
-    style result fill:#c8e6c9
+    style yolo fill:#263238,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style task fill:#263238,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style film fill:#455A64,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style context fill:#455A64,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style rank fill:#546E7A,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style result fill:#1E88E5,stroke:#ffffff,stroke-width:1px,color:#ffffff
 ```
 
 ## Inference Workflow
@@ -243,9 +243,9 @@ graph TB
     
     mlp --> logit["Final Logit<br/>M scores"]
     
-    style sim fill:#fff9c4
-    style mlp fill:#ffccbc
-    style logit fill:#c8e6c9
+    style sim fill:#455A64,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style mlp fill:#546E7A,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style logit fill:#263238,stroke:#ffffff,stroke-width:1px,color:#ffffff
 ```
 
 ## Core Components
@@ -727,12 +727,12 @@ graph TB
     reason --> select
     select --> output
     
-    style yolo fill:#ffccbc
-    style roi fill:#fff9c4
-    style reason fill:#fff9c4
-    style text_enc fill:#c8e6c9
-    style select fill:#e1f5ff
-    style output fill:#c8e6c9
+    style yolo fill:#37474F,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style roi fill:#455A64,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style reason fill:#455A64,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style text_enc fill:#263238,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style select fill:#1E88E5,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style output fill:#00796B,stroke:#ffffff,stroke-width:1px,color:#ffffff
 ```
 
 ### Execution Timeline: Parallel Strategy
@@ -847,50 +847,6 @@ task_aware_object_selection/
     └── similarity_engine/          # Placeholder: accelerator-optimized similarity
 ```
 
-## Troubleshooting
-
-### Training Issues
-
-**"RuntimeError: Error(s) in loading state_dict"**
-- Cause: Checkpoint from different model architecture (e.g., old MLP ranking vs. current linear ranking)
-- Fix: Delete `models/checkpoints/best_model.pt` and train from scratch, or use `--checkpoint-dir models/checkpoints/new_run` to specify a new checkpoint directory
-
-**Training is very slow (>1 hour per epoch)**
-- Cause: `num_workers > 0` with deterministic mode, or using CPU device
-- Fix: Use `--device cuda` if available; `--deterministic` automatically sets `num_workers=0`
-
-**"ModuleNotFoundError: No module named 'torch'"**
-- Cause: Missing PyTorch installation or wrong Python environment
-- Fix: `pip install -r requirements.txt` and ensure you're using the correct virtual environment
-
-**Validation accuracy not improving**
-- Possible causes: Learning rate too high/low, poor task-category priors, insufficient training data
-- Try: Reduce `--lr` to 5e-5, increase `--epochs` to 100, check task-prior distribution with `print()` debugging
-
-### Inference Issues
-
-**"FileNotFoundError: Reasoning network checkpoint not found"**
-- Cause: No trained `best_model.pt` yet
-- Fix: Run training first: `python training/train_ranking.py --device cuda --epochs 10`
-
-**Selected object is wrong or threshold seems ignored**
-- Cause: Weights in ranking layer may not match expected behavior, or threshold is too low
-- Try: Increase `--threshold` to 0.5, 0.7, 1.0 to be more selective
-
-**Out of memory during inference**
-- Cause: Large image size or too many proposals (rare)
-- Fix: Reduce `--image-size` to 480 or lower, or increase `--confidence` threshold to reduce proposal count
-
-### Reproducibility
-
-**Different results on GPU vs CPU**
-- Expected: Small numerical differences (~1e-6) due to hardware-level math
-- To minimize: Use `--deterministic --seed 42` during training
-- Cannot achieve: Exact bit-for-bit identity across GPU/CPU (hardware limitation)
-
-**Different results across runs with same seed**
-- Possible cause: `num_workers > 0` introduces non-determinism
-- Fix: Ensure `--deterministic` is set (auto-sets `num_workers=0`)
 
 ## References and Citations
 
